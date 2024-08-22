@@ -66,3 +66,9 @@ max.diff.rank.ordered.logit.with.ties = function(stacked.data){
   pars = c(0, solution$par)
   names(pars) = dimnames(stacked.data)[[2]]
   list(log.likelihood = solution$value, coef = pars)}
+
+null_log_likelihood <- function(rankings, nAlternatives) {
+  prob = 1 / nAlternatives
+  log_likelihood = sum(log(prob) * (rankings > 0))
+  return(log_likelihood)
+}

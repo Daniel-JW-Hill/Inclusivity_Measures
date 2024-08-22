@@ -1,9 +1,8 @@
 
-#This function returns preference data based on ranking questions over 8 buyer preference domains
-# The mlogit function performs a mixed logit model/hierarchial bayes model for preferences.
-# Individuals ranked attibutes from 1-4 over 6 questions. 
-# We convert this data to consider pairwise comparisons within a best-worst framework. 
-# This allows for binary decisions between two choices in the mlogit model. 
+# This function returns preference data based on ranking questions over 8 buyer preference domains
+# The model uses a respondent level ranked ordered logit model 
+# developed using code presented in https://docs.displayr.com/wiki/MaxDiff_Analysis_Case_Study_Using_R
+# 
 
 get_preferences = function(data) {
 
@@ -105,12 +104,25 @@ get_preferences = function(data) {
   source(here("Utilities", "get_ranked_logit.R"))
   
   individualRankLogit = individualCounts
+  lr_tests = data.frame("lr_stat" = rep(0, n),
+                        "p_value" = rep(0,n))
+  
   stackedID = rep(1:n,rep(nBlocks,n))
-  getRankCoefficients = function(id){max.diff.rank.ordered.logit.with.ties(data_long_all[stackedID == id,])$coef}
+  getRankCoefficients = function(id){max.diff.rank.ordered.logit.with.ties(data_long_all[stackedID == id,])}
   for (i in 1:n){
-    individualRankLogit[i,] = getRankCoefficients(i)
+    indiv_model = getRankCoefficients(i) #run full model
+    individualRankLogit[i,] = indiv_model$coef #retrieve coefficients from full model
+    lr_full = indiv_model$log.likelihood #retrieve individual model log likelihood
+    average_rankings = apply(data_long_all[stackedID == i,], 2, mean, na.rm = TRUE)
+    lr_null = null_log_likelihood(average_rankings, nAlternatives) #retrieve log likelihood of intercept only model (i.e. all probabilities are equal)
+    lr_tests[i,1] = -2*(lr_null - lr_full)
+    df = length(indiv_model$coef) - 1 
+    lr_tests[i,2] = pchisq(lr_tests[i,1], df, lower.tail = FALSE)
   }
-  set.seed(0) #setting the random number seed so that random numbers are consistently applied across the examples
+  
+  write.csv(lr_tests, file = here("Results", "preference_lrtests.csv")) # save individual model likelihood ratio tests
+  
+  set.seed(0) 
   ranks = nAlternatives + 1 - t(apply(individualRankLogit+ matrix(runif(n * nAlternatives)/100000, n),1,rank)) #ranks
   rankProportions = t(apply(t(ranks),1,table) / n * 100)
   round(rankProportions,3)

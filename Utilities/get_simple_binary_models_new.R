@@ -237,15 +237,17 @@ get_fitted_binary_full = function(hh_data,
                           fitted_opportunity_hh_model_dist,
                           fitted_preference_hh_model_dist,
                           fitted_hh_model_dist, 
-                          fitted_opportunity_hh_model_dist_onlysig)
-  names(fitted_values_hh) = c("Central_fitted","Dist_fitted_opportunity", "Dist_fitted_preferences","Dist_fitted_all", "Central_onlysig" )
+                          fitted_opportunity_hh_model_dist_onlysig, 
+                          model_hh_full)
+  names(fitted_values_hh) = c("Central_fitted","Dist_fitted_opportunity", "Dist_fitted_preferences","Dist_fitted_all", "Central_onlysig", "model_hh_full")
   
   fitted_values_indiv = list(fitted_values_indiv_model, 
                           fitted_opportunity_indiv_model_dist, 
                           fitted_preference_indiv_model_dist,
                           fitted_indiv_model_dist,
-                          fitted_opportunity_indiv_model_dist_onlysig)
-  names(fitted_values_indiv) = c("Central_fitted","Dist_fitted_opportunity", "Dist_fitted_preferences","Dist_fitted_all", "Central_onlysig"  )
+                          fitted_opportunity_indiv_model_dist_onlysig,
+                          model_indiv_full)
+  names(fitted_values_indiv) = c("Central_fitted","Dist_fitted_opportunity", "Dist_fitted_preferences","Dist_fitted_all", "Central_onlysig", "model_indiv_full")
   
   fitted_binary_full = list(fitted_values_hh,
                            fitted_values_indiv)
@@ -255,4 +257,4 @@ get_fitted_binary_full = function(hh_data,
          
 } 
          
-         
+                                     
