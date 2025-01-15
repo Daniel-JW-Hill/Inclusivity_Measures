@@ -35,19 +35,25 @@ get_hh_models = function(hh_data,
   #Summary of model
   model_summary_hh_direct = summary(model_hh_direct)
   
-  # Calculate pseudo R-squared Nakagawa R2 (2017)
+  # Calculate McFadden pseudo R-squared McFaden
   log_likelihood = model_summary_hh_direct$logLik[1]
-  nakagawa_R_squared = performance::r2(model_hh_direct) # adjusted 
-  # Null model for LR test
-  eq_null = as.formula("CONTINUOUS_PARTICIPATION ~ 1")
-  model_null = glmmTMB(eq_null, data = hh_data, family = beta_family(link = "logit"), ziformula = eq_null, dispformula = ~ 1)
-  model_null_summary = summary(model_null)
+  null_model = update(model_hh_direct, formula = ~1, ziformula = ~1)
+  log_likelihood_null = logLik(null_model)
+  k = sum(nrow(model_summary_hh_direct$coefficients[[1]]), 
+          nrow(model_summary_hh_direct$coefficients[[2]]), 
+          nrow(model_summary_hh_direct$coefficients[[3]]))
+  
+  R_squared = as.numeric(1 - (log_likelihood/log_likelihood_null ))
+  R_squared_adj = 1 - (as.numeric(log_likelihood)-k)/as.numeric(log_likelihood_null)
+  
+  # LR test stat
+  model_null_summary = summary(null_model)
   LRtestStat = -2*(model_summary_hh_direct$logLik - model_null_summary$logLik)
   
   tests_df = data.frame(
     "log_likelihood" = log_likelihood,
-    "Nagakawa_R_squared" = nakagawa_R_squared[1],
-    "Nagakawa_R_squared_adj" = nakagawa_R_squared[2],
+    "R_squared" = R_squared,
+    "R_squared_adj" = R_squared_adj,
     "LRteststat" = LRtestStat 
   )
   
@@ -97,19 +103,25 @@ get_hh_models = function(hh_data,
   #Summary of model
   model_summary_hh_reduced = summary(model_hh_reduced)
   
-  # Calculate pseudo R-squared Nakagawa R2 (2017)
+  # Calculate McFadden pseudo R-squared McFaden
   log_likelihood = model_summary_hh_reduced$logLik[1]
-  nakagawa_R_squared = performance::r2(model_hh_reduced) # adjusted 
-  # Null model for LR test
-  eq_null = as.formula("CONTINUOUS_PARTICIPATION ~ 1")
-  model_null = glmmTMB(eq_null, data = hh_data, family = beta_family(link = "logit"), ziformula = eq_null, dispformula = ~ 1)
-  model_null_summary = summary(model_null)
+  null_model = update(model_hh_reduced, formula = ~1, ziformula = ~1)
+  log_likelihood_null = logLik(null_model)
+  k = sum(nrow(model_summary_hh_reduced$coefficients[[1]]), 
+          nrow(model_summary_hh_reduced$coefficients[[2]]), 
+          nrow(model_summary_hh_reduced$coefficients[[3]]))
+  
+  R_squared = as.numeric(1 - (log_likelihood/log_likelihood_null ))
+  R_squared_adj = 1 - (as.numeric(log_likelihood)-k)/as.numeric(log_likelihood_null)
+  
+  # LR test stat
+  model_null_summary = summary(null_model)
   LRtestStat = -2*(model_summary_hh_reduced$logLik - model_null_summary$logLik)
   
   tests_df = data.frame(
     "log_likelihood" = log_likelihood,
-    "Nagakawa_R_squared" = nakagawa_R_squared[1],
-    "Nagakawa_R_squared_adj" = nakagawa_R_squared[2],
+    "R_squared" = R_squared,
+    "R_squared_adj" = R_squared_adj,
     "LRteststat" = LRtestStat 
   )
   

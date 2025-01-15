@@ -221,7 +221,6 @@ get_contribution_plots(contributions_of = "PSY")
 # Now we perform the estimations with artificially introduced bias. 
 # This will give us the ranges in which we may expect a causal interpretation
 # of the inequality in opportunity measures. 
-Outcome_hh = Outcome_indiv = c("BINARY_PARTICIPATION")
 
 # Individual model
 source(here("Utilities", "get_bias_ci_indiv_binary.R"))
