@@ -1,7 +1,8 @@
 
-## Script for Measurement of inclusion within smallholder value chains 
+## Script for Measurement of extensive and intensive inclusion 
+## within smallholder orientated high value markets. 
 
-# Daniel Hill February 2024
+# Daniel Hill
 
 # This is the head script for analysis of inclusion measurement methodologies
 # For coffee selling households in Kapchorwa. 
@@ -84,7 +85,10 @@ source(here('Utilities', "get_indiv_model_data.R"))
 hh_data = get_hh_model_data(data)
 indiv_data = get_indiv_model_data(data)
 
-# Save data and reload
+###############################
+#### Save data and reload #####
+###############################
+
 write.csv(data, file = here("Data", "Data_clean.csv"))
 write.csv(hh_data, file = here("Data","hh_data.csv"))
 write.csv(indiv_data, file = here("Data","indiv_data.csv"))
@@ -97,7 +101,7 @@ indiv_data = read.csv(here("Data","indiv_data.csv"))
 ###########################
 
 # Set up models for estimation
-Outcome_hh = c("BINARY_PARTICIPATION")
+Outcome_hh = c("CONTINUOUS_PARTICIPATION")
 C_hh = c("AGE_HEAD", "EDUCATION_HEAD" , "DEPENDENCY_RATIO" , "SOCIAL_PARTICIPATION" , "COFFEE_TREES" ,
          "PROPORTION_LAND_RENTED" , "ASSETS" , "ALTITUDE", "DISTANCE_PAVED_ROAD" , "DECISION_DISAGREEMENTS") 
 P_hh   = c("PRICE_PREFERENCES" , "INPUT_PREFERENCES")
@@ -124,90 +128,58 @@ hh_data = first_stage_outputs[[1]]
 indiv_data = first_stage_outputs[[2]]
 rm(first_stage_outputs)
 
-# Firstly perform full household and individual logit models on binary outcomes. 
-# This script returns fitted values for direct opportunity, and outcomes. 
-source(here('Utilities', "get_simple_binary_models_new.R"))
-fitted_binary_full  = get_fitted_binary_full(hh_data, 
-                                               indiv_data,
-                                               Outcome_hh, C_hh,P_hh,Z_hh,
-                                               Outcome_indiv, C_indiv, P_indiv,Z_indiv)
-
-# Now perform the same outputs for a reduced form model (with residual preferences).
-#This script returns the coefficients for direct and indirect impacts of circumstances. 
-
 V_hh = c("PRICE_PREFERENCES_RESIDUALS" , "INPUT_PREFERENCES_RESIDUALS", "RELATIVE_PRICE_DIFFERENTIAL_RESIDUALS")
 V_indiv = c("PRICE_PREFERENCES_RESIDUALS" , "INPUT_PREFERENCES_RESIDUALS", "RELATIVE_PRICE_DIFFERENTIAL_RESIDUALS")
 
-source(here('Utilities', "get_fitted_binary_reduced.R"))
-fitted_binary_reduced  = get_fitted_binary_reduced(hh_data, 
-                                                   indiv_data,
-                                                   Outcome_hh, C_hh, V_hh,
-                                                   Outcome_indiv, C_indiv, V_indiv)
+# Firstly perform direct and reduced form models for individual extensive HVM participation 
+# This script returns fitted values for HVM participation opportunity, and saves model results 
+# in the results folder. 
+
+source(here('Utilities', "get_indiv_models.R"))
+fitted_indiv = get_indiv_models(indiv_data,
+                                Outcome_indiv,
+                                C_indiv,
+                                P_indiv,
+                                Z_indiv, 
+                                V_indiv)
+
+# Now perform the same for the household mixture distribution 
+source(here('Utilities', "get_hh_models.R"))
+fitted_hh  = get_hh_models(hh_data, 
+                           Outcome_hh,
+                           C_hh, 
+                           P_hh,
+                           Z_hh,
+                           V_hh)
+
+###############################################
+#### Inequality in opportunity estimation #####
+###############################################
 
 # With these results, now estimate inequality measures and ranges. 
 source(here('Utilities', "get_inequality_measures.R"))
-get_inequality_measures(fitted_binary_full$HH_models, 
-                        fitted_binary_reduced$HH_models, 
-                        title = "Binary household model ineq results (fitted)",
-                        relative_to = "fitted")
 
-get_inequality_measures(fitted_binary_full$Individual_models, 
-                        fitted_binary_reduced$Individual_models, 
+#Individual model - extensive opportunity to participate
+get_inequality_measures(fitted_indiv$Direct_models, 
+                        fitted_indiv$Reduced_models, 
                         title = "Binary individual model ineq results (fitted)",
                         relative_to = "fitted")
 
-# Get preference and latent variable inequality measures and ranges
-source(here('Utilities', "get_other_inequality_measures.R"))
-get_other_inequality_measures(fitted_binary_full$HH_models, 
-                              fitted_binary_reduced$HH_models,
-                              title = "Binary household model ineq results (fitted)",
-                              relative_to = "fitted")
-
-get_other_inequality_measures(fitted_binary_full$Individual_models, 
-                              fitted_binary_reduced$Individual_models,
-                              title = "Binary individual model ineq results (fitted)",
-                              relative_to = "fitted")
-
-# Now a simple household continuous model (tobit beta regression)
-Outcome_hh = c("CONTINUOUS_PARTICIPATION")
-
-source(here('Utilities', "get_fitted_continuous_beta_full.R"))
-fitted_continuous_full  = get_fitted_continuous_full(hh_data, Outcome_hh, C_hh, P_hh, Z_hh)
-
-source(here('Utilities', "get_fitted_continuous_beta_reduced.R"))
-fitted_continuous_reduced  = get_fitted_continuous_reduced(hh_data, Outcome_hh, C_hh, V_hh)
-
-#Get inequality scores for continuous model - conditional and response fitted values
-get_inequality_measures(fitted_continuous_full$zprob, 
-                        fitted_continuous_reduced$zprob, 
+#HH model - extensive, intensive, and total.
+get_inequality_measures(fitted_hh$direct$zprob, 
+                        fitted_hh$reduced$zprob, 
                         title = "Continuous household model ineq results (zprob fitted)", 
                         relative_to = "fitted")
 
-get_inequality_measures(fitted_continuous_full$response, 
-                        fitted_continuous_reduced$response, 
-                        title = "Continuous household model ineq results (response fitted)", 
-                        relative_to = "fitted")
-
-get_inequality_measures(fitted_continuous_full$conditional,  
-                        fitted_continuous_reduced$conditional, 
+get_inequality_measures(fitted_hh$direct$conditional, 
+                        fitted_hh$reduced$conditional,  
                         title = "Continuous household model ineq results (conditional fitted)", 
                         relative_to = "fitted")
 
-# Get preference and latent variable inequality measures and ranges
-get_other_inequality_measures(fitted_continuous_full$zprob,  
-                              fitted_continuous_reduced$zprob, 
-                              title = "Continuous household model ineq results (response fitted)",
-                              relative_to = "fitted")
-
-get_other_inequality_measures(fitted_continuous_full$response,  
-                              fitted_continuous_reduced$response, 
-                              title = "Continuous household model ineq results (response fitted)",
-                              relative_to = "fitted")
-
-get_other_inequality_measures(fitted_continuous_full$conditional,  
-                              fitted_continuous_reduced$conditional, 
-                              title = "Continuous household model ineq results (conditional fitted)",
-                              relative_to = "fitted")
+get_inequality_measures(fitted_hh$direct$response, 
+                        fitted_hh$reduced$response, 
+                        title = "Continuous household model ineq results (response fitted)", 
+                        relative_to = "fitted")
 
 ########################
 #### DECOMPOSITIONS ####
@@ -217,28 +189,28 @@ get_other_inequality_measures(fitted_continuous_full$conditional,
 # We can move onto understand the contribution of each variable
 # through a decomposition analysis
 
-# This sets each variable as constant (binary values = 1) and estimates
-# the relative difference each inequality score is to the central estimate with
-# all variables included. 
-Outcome_hh = Outcome_indiv = c("BINARY_PARTICIPATION")
+# This is achieved by eliminating  the variation of a single variable at a time
+# and re-estimating the inequality in opportunity. 
 
-source(here("Utilities", "get_shapley_binary_full.R"))
-get_contributions_binary_full(hh_data, indiv_data,
-                              Outcome_hh,C_hh,P_hh,Z_hh,
-                              Outcome_indiv,C_indiv,P_indiv,Z_indiv)
+#Individual model - extensive only
+source(here("Utilities", "get_decomposition_indiv.R"))
+get_decomposition_indiv(indiv_data,
+                        Outcome_indiv,
+                        C_indiv,
+                        P_indiv,
+                        Z_indiv,
+                        V_indiv)
 
-source(here("Utilities", "get_shapley_binary_reduced.R"))
-get_contributions_binary_reduced(hh_data, indiv_data,
-                              Outcome_hh,C_hh,V_hh,
-                              Outcome_indiv,C_indiv,V_indiv)
+# Household model - extensive, intensive and total
+source(here("Utilities", "get_decomposition_hh.R"))
+get_decomposition_hh(hh_data, 
+                     Outcome_hh,
+                     C_hh,
+                     P_hh,
+                     Z_hh,
+                     V_hh)
 
-
-Outcome_hh = c("CONTINUOUS_PARTICIPATION")
-
-source(here("Utilities", "get_shapley_continuous_beta.R"))
-get_contributions_continuous(hh_data, Outcome_hh,C_hh,P_hh, Z_hh, V_hh)
-
-## Plot contributions ####
+# Plot contributions, drawing on csv files saved in results folder. 
 source(here("Utilities", "get_contribution_plots.R"))
 get_contribution_plots(contributions_of = "PSY")
 
@@ -249,15 +221,12 @@ get_contribution_plots(contributions_of = "PSY")
 # Now we perform the estimations with artificially introduced bias. 
 # This will give us the ranges in which we may expect a causal interpretation
 # of the inequality in opportunity measures. 
-Outcome_hh = Outcome_indiv = c("BINARY_PARTICIPATION")
 
-source(here("Utilities", "get_bias_ci_HH_binary.R"))
-# get_bias_ci_hh_binary(hh_data, Outcome_hh, C_hh, P_hh, Z_hh, V_hh)
-
+# Individual model
 source(here("Utilities", "get_bias_ci_indiv_binary.R"))
 get_bias_ci_indiv_binary(indiv_data, Outcome_indiv, C_indiv, P_indiv, Z_indiv, V_indiv)
 
-Outcome_hh =  c("CONTINUOUS_PARTICIPATION")
+# Household model
 source(here("Utilities", "get_bias_ci_continuous.R"))
 get_bias_ci_continuous(hh_data, Outcome_hh, C_hh, P_hh, Z_hh, V_hh)
 
