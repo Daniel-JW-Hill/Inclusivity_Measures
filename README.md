@@ -1,8 +1,8 @@
 # README FILE FOR: Measurement of extensive and intensive smallholder inclusion in high value markets.
 
-## Daniel Hill and Daniel Gregg
+## Daniel Hill
 
-## Last update: 09 January 2025
+## Last update: 25 January 2025
 
 This replication package contains the data, code and supplementary materials for the manuscript titled * Measurement of extensive and intensive smallholder inclusion in high value markets.* The files and folders contained in this package include:
 
